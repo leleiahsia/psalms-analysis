@@ -1,0 +1,30 @@
+{
+  "name": "psalms-analysis-desktop",
+  "version": "1.0.0",
+  "description": "Psalms Analysis desktop app",
+  "main": "desktop/main.js",
+  "author": "Psalms Analysis",
+  "license": "MIT",
+  "build": {
+    "appId": "com.psalmsanalysis.desktop",
+    "productName": "Psalms Analysis",
+    "asar": true,
+    "files": [
+      "desktop/**/*",
+      "web/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "desktop-dist"
+    },
+    "electronVersion": "42.5.1",
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    }
+  }
+}

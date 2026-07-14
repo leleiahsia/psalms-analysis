@@ -1,5 +1,9 @@
 # Psalms Analysis
 
+Cloudflare Pages deployment uses `wrangler.toml` and publishes the `web` directory. Deploy with
+`npx wrangler pages deploy web --project-name psalms-analysis`, or connect this GitHub repository
+to Cloudflare Pages with `web` as the build output directory and no build command.
+
 The native Android app and browser client share annotations through the signed-in user's private Google Drive `appDataFolder`.
 
 ## Web app
