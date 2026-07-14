@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Psalms Analysis</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div><p class="eyebrow">KJV study workspace</p><h1 id="title">Psalm 1</h1></div>
+      <button id="signIn" class="account">Sign in with Google</button>
+    </header>
+    <section class="controls">
+      <label>Psalm <select id="chapter"></select></label>
+      <label>Feature <select id="feature"></select></label>
+      <button id="previous" aria-label="Previous Psalm">&#8592;</button>
+      <button id="next" aria-label="Next Psalm">&#8594;</button>
+    </section>
+    <p id="description" class="description"></p>
+    <article id="text" class="psalm" aria-live="polite"></article>
+    <p id="status" class="status">Offline annotations are saved in this browser.</p>
+  </main>
+  <dialog id="noteDialog"><form method="dialog"><h2 id="noteTitle"></h2><textarea id="noteText" rows="5" placeholder="Write your note for this word"></textarea><div class="dialog-actions"><button value="cancel">Cancel</button><button id="deleteNote" value="delete">Delete</button><button id="saveNote" value="save">Save</button></div></form></dialog>
+  <script src="app.js"></script>
+</body>
+</html>
