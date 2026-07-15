@@ -11,11 +11,15 @@ const FEATURES = [
   ['Symbolic Numbers','Certain numbers carry literary or theological significance.\nExample: Psalm 119 has 22 sections, each with 8 verses.'],
   ['Sound Patterns','Alliteration, assonance, wordplay, and puns enrich the Hebrew text.\nExample: \'adam and \'adamah echo each other in Genesis 2-3.']
 ];
+const FEATURE_IDS = ['parallelism','imagery','concrete_language','merism','chiasm','inclusio','acrostics','repetition','emotional_movement','symbolic_numbers','sound_patterns'];
 const SCOPE='https://www.googleapis.com/auth/drive.appdata', FILE='psalms-analysis-annotations.json';
 let psalms=[], chapter=0, feature=0, annotations=JSON.parse(localStorage.getItem('psalmAnnotations')||'{"highlights":[],"notes":{}}'), token=null, activeWord=null;
 const $=id=>document.getElementById(id);
-function key(psalm, verse, word){ return `${psalm}|${feature}|${verse}|${word}`; }
+function normalizeAnnotationKey(value){const parts=value.split('|');if(parts.length!==4)return value;const featureIndex=Number(parts[1]);return Number.isInteger(featureIndex)&&FEATURE_IDS[featureIndex]?`${parts[0]}|${FEATURE_IDS[featureIndex]}|${parts[2]}|${parts[3]}`:value;}
+function migrateLocalAnnotations(){annotations.highlights=(annotations.highlights||[]).map(normalizeAnnotationKey);const migratedNotes={};Object.entries(annotations.notes||{}).forEach(([k,v])=>{migratedNotes[normalizeAnnotationKey(k)]=v;});annotations.notes=migratedNotes;saveLocal();}
+function key(psalm, verse, word){ return `${psalm}|${FEATURE_IDS[feature]}|${verse}|${word}`; }
 function saveLocal(){ localStorage.setItem('psalmAnnotations',JSON.stringify(annotations)); }
+migrateLocalAnnotations();
 function toggleWord(s){const k=s.dataset.key;if(annotations.notes[k])return;const on=annotations.highlights.includes(k);annotations.highlights=on?annotations.highlights.filter(x=>x!==k):[...annotations.highlights,k];s.classList.toggle('highlight',!on);saveLocal();sync();}
 function render(){ $('title').textContent=`Psalm ${chapter+1}`; $('description').textContent=FEATURES[feature][1]; const out=$('text'); out.innerHTML=''; psalms[chapter].forEach(v=>{ const span=document.createElement('span'); span.className='verse'; span.textContent=v.verse+' '; out.append(span); let i=0; v.text.split(/(\s+)/).forEach(part=>{ if(/^\s+$/.test(part)){out.append(part);return;} const s=document.createElement('span'); const k=key(chapter+1,v.verse,i++); s.className='word '+(annotations.notes[k]?'note':annotations.highlights.includes(k)?'highlight':''); s.textContent=part; s.dataset.key=k; let timer; const finish=()=>{clearTimeout(timer); if(s.isPointerDown){s.isPointerDown=false;toggleWord(s);}}; s.addEventListener('pointerdown',e=>{e.preventDefault();s.isPointerDown=true;timer=setTimeout(finish,450);s.setPointerCapture?.(e.pointerId);}); s.addEventListener('pointermove',e=>{if(s.isPointerDown)finish();}); s.addEventListener('pointerup',finish); s.addEventListener('pointercancel',()=>{clearTimeout(timer);s.isPointerDown=false;}); s.addEventListener('dblclick',()=>openNote(k,v.verse,part)); out.append(s); }); out.append('\n\n'); }); }
 function openNote(k,verse,word){ activeWord={k}; $('noteTitle').textContent=`Psalm ${chapter+1}:${verse} note`; $('noteText').value=annotations.notes[k]||''; $('noteDialog').showModal(); }
