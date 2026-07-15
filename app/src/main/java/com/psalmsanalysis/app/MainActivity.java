@@ -75,6 +75,7 @@ public class MainActivity extends Activity {
     private Spinner chapterSpinner;
     private Spinner featureSpinner;
     private ScrollView scrollView;
+    private Button accountButton;
 
     private int currentPsalmIndex = 0;
     private int currentFeatureIndex = 0;
@@ -151,12 +152,13 @@ public class MainActivity extends Activity {
         featureDescriptionView.setPadding(dp(4), dp(6), dp(4), 0);
         controls.addView(featureDescriptionView);
 
-        Button accountButton = new Button(this);
+        accountButton = new Button(this);
         accountButton.setText("Sign in to sync with Google Drive");
         accountButton.setAllCaps(false);
         accountButton.setOnClickListener(v -> startGoogleSignIn());
         controls.addView(accountButton, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        updateAccountButton();
 
         scrollView = new ScrollView(this);
         scrollView.setFillViewport(false);
@@ -361,11 +363,19 @@ public class MainActivity extends Activity {
         try {
             GoogleSignInAccount account = task.getResult(ApiException.class);
             googleSync.setAccount(account);
+            updateAccountButton();
             Toast.makeText(this, "Google sync connected", Toast.LENGTH_SHORT).show();
             googleSync.syncInBackground(this::renderPsalm);
         } catch (ApiException e) {
             Toast.makeText(this, "Google sign-in failed: " + e.getStatusCode(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void updateAccountButton() {
+        if (accountButton == null) return;
+        accountButton.setText(GoogleSignIn.getLastSignedInAccount(this) != null
+                ? "Already signed in to Google"
+                : "Sign in to sync with Google Drive");
     }
 
     private List<String> createChapterLabels() {
