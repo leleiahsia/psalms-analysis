@@ -26,4 +26,5 @@ android {
 
 dependencies {
     implementation("com.google.android.gms:play-services-auth:21.3.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 }

@@ -12,7 +12,7 @@
   <main class="shell">
     <header>
       <div><p class="eyebrow">KJV study workspace</p><h1 id="title">Psalm 1</h1></div>
-      <button id="signIn" class="account">Sign in with Google</button>
+      <div class="account-actions"><button id="settings">Sync settings</button><button id="signIn" class="account">Sign in with Google</button></div>
     </header>
     <section class="controls">
       <label>Psalm <select id="chapter"></select></label>
@@ -25,6 +25,7 @@
     <p id="status" class="status">Offline annotations are saved in this browser.</p>
   </main>
   <dialog id="noteDialog"><form method="dialog"><h2 id="noteTitle"></h2><textarea id="noteText" rows="5" placeholder="Write your note for this word"></textarea><div class="dialog-actions"><button value="cancel">Cancel</button><button id="deleteNote" value="delete">Delete</button><button id="saveNote" value="save">Save</button></div></form></dialog>
+  <dialog id="syncDialog"><form method="dialog"><h2>Sync settings</h2><label>Automatic sync interval (seconds)<input id="syncInterval" type="number" min="5" max="3600" step="1"></label><p class="dialog-help">Default: every 30 seconds.</p><div class="dialog-actions"><button value="cancel">Cancel</button><button id="saveSyncSettings" value="save">Save</button></div></form></dialog>
   <script src="app.js"></script>
 </body>
 </html>

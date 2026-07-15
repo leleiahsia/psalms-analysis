@@ -8,6 +8,7 @@ h1 { margin:0; font-size:34px; }
 button, select, textarea { font:inherit; }
 button, select { border:1px solid #d7ccb9; border-radius:6px; background:#fffaf0; color:var(--ink); padding:10px 12px; }
 button { cursor:pointer; }
+.account-actions { display:flex; gap:8px; align-items:center; }
 .account { background:var(--accent); color:#fff; border:0; font-family:system-ui,sans-serif; }
 .controls { display:grid; grid-template-columns:minmax(120px,1fr) minmax(220px,2fr) 46px 46px; gap:10px; margin-top:22px; align-items:end; }
 label { display:grid; gap:6px; color:var(--muted); font:700 12px system-ui,sans-serif; text-transform:uppercase; }
@@ -21,5 +22,6 @@ label { display:grid; gap:6px; color:var(--muted); font:700 12px system-ui,sans-
 dialog { border:0; border-radius:8px; padding:22px; width:min(520px, calc(100vw - 32px)); box-shadow:0 12px 44px #251f1855; }
 dialog::backdrop { background:#251f1866; }
 textarea { width:100%; resize:vertical; margin:12px 0; padding:10px; border:1px solid #d7ccb9; }
+.dialog-help { color:var(--muted); font:14px system-ui,sans-serif; }
 .dialog-actions { display:flex; justify-content:flex-end; gap:8px; }
 @media (max-width:650px) { .shell { padding:20px 12px 36px; } header { align-items:flex-start; flex-direction:column; } .controls { grid-template-columns:1fr 1fr 46px 46px; } .controls label:nth-child(2) { grid-column:1 / -1; grid-row:2; } h1 { font-size:30px; } .psalm { font-size:20px; padding:20px 14px; } }

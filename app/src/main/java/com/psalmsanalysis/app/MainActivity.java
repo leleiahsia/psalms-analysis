@@ -30,6 +30,7 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -76,6 +77,15 @@ public class MainActivity extends Activity {
     private Spinner featureSpinner;
     private ScrollView scrollView;
     private Button accountButton;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private final Handler syncHandler = new Handler(Looper.getMainLooper());
+    private long syncIntervalMs;
+    private final Runnable autoSyncRunnable = new Runnable() {
+        @Override public void run() {
+            syncFromGoogle(false);
+            syncHandler.postDelayed(this, syncIntervalMs);
+        }
+    };
 
     private int currentPsalmIndex = 0;
     private int currentFeatureIndex = 0;
@@ -88,12 +98,14 @@ public class MainActivity extends Activity {
         features.addAll(createFeatures());
         annotationStore = new AnnotationStore(this);
         googleSync = new GoogleSync(this, annotationStore);
+        syncIntervalMs = getSharedPreferences("psalm_settings", MODE_PRIVATE).getLong("sync_interval_ms", 30000L);
         GoogleSignInAccount previousAccount = GoogleSignIn.getLastSignedInAccount(this);
         if (previousAccount != null) googleSync.setAccount(previousAccount);
         psalms = PsalmRepository.load(this);
         buildUi();
         showPsalm(0);
         googleSync.syncInBackground(this::renderPsalm);
+        startAutoSync();
     }
 
     private void buildUi() {
@@ -160,6 +172,13 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         updateAccountButton();
 
+        Button settingsButton = new Button(this);
+        settingsButton.setText("Sync settings");
+        settingsButton.setAllCaps(false);
+        settingsButton.setOnClickListener(v -> showSyncSettingsDialog());
+        controls.addView(settingsButton, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
         scrollView = new ScrollView(this);
         scrollView.setFillViewport(false);
         psalmTextView = new PsalmTextView(this);
@@ -182,7 +201,12 @@ public class MainActivity extends Activity {
         scrollView.addView(psalmTextView, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
-        main.addView(scrollView, new LinearLayout.LayoutParams(
+        swipeRefreshLayout = new SwipeRefreshLayout(this);
+        swipeRefreshLayout.setOnRefreshListener(() -> syncFromGoogle(true));
+        swipeRefreshLayout.addView(scrollView, new SwipeRefreshLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        main.addView(swipeRefreshLayout, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 0,
                 1f));
@@ -355,6 +379,48 @@ public class MainActivity extends Activity {
         startActivityForResult(client.getSignInIntent(), GOOGLE_SIGN_IN_REQUEST);
     }
 
+    private void syncFromGoogle(boolean userRequested) {
+        if (!googleSync.hasAccount()) {
+            if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
+            if (userRequested) Toast.makeText(this, "Sign in to sync with Google Drive", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        googleSync.syncInBackground(() -> {
+            renderPsalm();
+            if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
+        });
+    }
+
+    private void startAutoSync() {
+        syncHandler.removeCallbacks(autoSyncRunnable);
+        syncHandler.postDelayed(autoSyncRunnable, syncIntervalMs);
+    }
+
+    private void showSyncSettingsDialog() {
+        EditText input = new EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        input.setText(String.valueOf(syncIntervalMs / 1000L));
+        input.setSelectAllOnFocus(true);
+        input.setHint("Seconds");
+        new AlertDialog.Builder(this)
+                .setTitle("Automatic sync interval")
+                .setMessage("Choose how often to sync with Google Drive (5-3600 seconds).")
+                .setView(input)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    try {
+                        long seconds = Math.max(5L, Math.min(3600L, Long.parseLong(input.getText().toString())));
+                        syncIntervalMs = seconds * 1000L;
+                        getSharedPreferences("psalm_settings", MODE_PRIVATE).edit().putLong("sync_interval_ms", syncIntervalMs).apply();
+                        startAutoSync();
+                        syncFromGoogle(false);
+                    } catch (NumberFormatException ignored) {
+                        Toast.makeText(this, "Enter a number of seconds", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -376,6 +442,11 @@ public class MainActivity extends Activity {
         accountButton.setText(GoogleSignIn.getLastSignedInAccount(this) != null
                 ? "Already signed in to Google"
                 : "Sign in to sync with Google Drive");
+    }
+
+    @Override protected void onDestroy() {
+        syncHandler.removeCallbacks(autoSyncRunnable);
+        super.onDestroy();
     }
 
     private List<String> createChapterLabels() {
@@ -613,6 +684,7 @@ public class MainActivity extends Activity {
 
         GoogleSync(Context context, AnnotationStore store) { this.context = context.getApplicationContext(); this.store = store; }
         void setAccount(GoogleSignInAccount account) { this.account = account; }
+        boolean hasAccount() { return account != null; }
         void syncInBackground(Runnable onComplete) {
             if (account == null) return;
             executor.execute(() -> {
