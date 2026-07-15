@@ -92,6 +92,7 @@ public class MainActivity extends Activity {
         psalms = PsalmRepository.load(this);
         buildUi();
         showPsalm(0);
+        googleSync.syncInBackground(this::renderPsalm);
     }
 
     private void buildUi() {
